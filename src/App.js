@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react"
 import { Card, CardContent } from "@material-ui/core"
 import styled from "styled-components"
 
-import { api } from "./api"
+ import { getAPIsBase } from "./api"
+import './App.css';
 
+// Set Base style of tag dev 
 const Div = styled.div`
   margin: 0 auto;
   width: 100%;
@@ -13,7 +15,7 @@ const Div = styled.div`
   align-items: center;
 
   div {
-    width: 60%;
+    width: 50%;
     height: 80px;
     display: flex;
     justify-content: center;
@@ -21,32 +23,35 @@ const Div = styled.div`
     margin: 3px;
     color: white;
   }
-`
+`;
+// ส่วนการตรวจสอบการทำงานของ Project เริ่มต้นให้ loadding ข้อมูลชุดละเท่าไหร่
+let   baseLoaddingEle = 1 ;
 
 const Posts = () => {
-  const [allPosts, setAllPosts] = useState(null)
-  const [displayedPosts, setDisplayedPosts] = useState(null)
-  const [observedEl, setObservedEl] = useState(null)
-
+  const [totalPosts, settotalPosts] = useState(null)
+  const [displayPosts, setdisplayPosts] = useState(null)
+  const [observedEl, setObservedEl] = useState(null);
   const loadMore = posts => {
     setTimeout(() => {
-      setDisplayedPosts([
-        ...displayedPosts,
+      // console.log(posts)
+      setdisplayPosts([
+        ...displayPosts,
         ...posts.slice(
-          displayedPosts.length,
-          posts.length > displayedPosts.length + 10
-            ? displayedPosts.length + 10
+          displayPosts.length,
+          posts.length > displayPosts.length + baseLoaddingEle
+            ? displayPosts.length + baseLoaddingEle
             : posts.length
         )
       ])
     }, 500)
   }
 
+  
   const observer = new IntersectionObserver(
     items => {
       if (items[0].isIntersecting) {
         // if more data, load more
-        loadMore(allPosts)
+        loadMore(totalPosts)
       }
     },
     { threshold: 1 }
@@ -55,16 +60,18 @@ const Posts = () => {
   // CallData from Backend
   useEffect(() => {
     const getData = async () => {
-      const posts = await api()
-      setAllPosts(posts)
+       const posts = await getAPIsBase()
+      settotalPosts(posts)
     }
     getData()
   }, [])
 
-  // Set first display depending on the posts (allPosts) the received from backend
+  // Set first display depending on the posts (totalPosts) the received from backend
   useEffect(() => {
-    if (allPosts) setDisplayedPosts(allPosts.slice(0, 10))
-  }, [allPosts])
+    if (totalPosts){
+      setdisplayPosts(totalPosts.slice(0, 10))
+    } 
+  }, [totalPosts])
 
   useEffect(() => {
     if (observedEl) {
@@ -80,32 +87,65 @@ const Posts = () => {
 
   return (
     <>
-      {!displayedPosts ? (
+      {!displayPosts ? (
         <p>Loading...</p>
       ) : (
-        displayedPosts.map(post => (
-          <div key={post}>
-            <Card style={{ background: "brown" }}>
-              <CardContent>{post}</CardContent>
+        displayPosts.map(post => (
+          <div key={post.id} className='p-3'>
+            <Card className="bg-secondary p-3">
+            {post.id} <img src={post.thumbnailUrl} className="card-img-top m-3 " alt="..."/>
+              <CardContent className="text-center"> {post.title}</CardContent>
             </Card>
           </div>
         ))
       )}
 
-      {(allPosts && allPosts.length) >
-        (displayedPosts && displayedPosts.length) && (
-        <p ref={setObservedEl}>Load more...</p>
+      {(totalPosts && totalPosts.length) >
+        (displayPosts && displayPosts.length) && (
+        <p ref={setObservedEl}>Loading more...</p>
       )}
     </>
   )
 }
 
+const changeLoadding = (e)=>{
+  // console.log(e.target.value);
+  // setbaseLoaddingEle(e.target.value);
+  baseLoaddingEle =  parseInt(e.target.value);
+
+}
+
+// ส่วน Component Droup Down Render การแสดงผล 
+function DroupDown(){
+  return (
+    <div >
+      
+      <select className="form-select w-50" aria-label="Default select example " onChange={changeLoadding}>
+      <option selected>1</option>
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="30">30</option>
+    </select>
+    </div>
+  )
+}
+
+
 function App() {
   return (
-    <Div>
-      <Posts />
+
+    <Div >
+      
+      <h3 className="p-3">Infinity Loadding Components</h3>
+      <hr className="bg-dark"></hr>
+      <label htmlFor="" className="text-right">selected fetch data from api </label>
+      <DroupDown/>
+
+      <Posts  className='m-5'/>
     </Div>
   )
 }
+
+  
 
 export default App
